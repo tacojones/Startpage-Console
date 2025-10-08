@@ -1,6 +1,6 @@
 # Minimal Startpage
 
-![Startpage Screenshot](./start.png)
+![Startpage Screenshot](./console.png)
 
 A lightweight, minimalistic startpage for your browser.
 
