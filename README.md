@@ -1,14 +1,19 @@
-# Minimal Startpage
+# Startpage Console
 
 ![Startpage Screenshot](./console.png)
 
-A lightweight, minimalistic startpage for your browser.
+A startpage for your browser.
 
 ## Features
 
-- Clean and simple design
-- Quick access to your favorite links
-- Fully customizable
+- Terminal-style startpage interface with retro aesthetics
+- Audio streams integration (YouTube-based coding music & news streams)
+- Podcast feed support with play/pause/stop controls
+- Terminal notepad with auto-save and character count
+- News feeds display with background refresh and caching
+- Multiple proxy fallback for reliable RSS fetching
+- Quick-access link grid with categorized sections
+- System info/status bar (uptime, CPU, RAM, network)
 
 ## Installation
 
