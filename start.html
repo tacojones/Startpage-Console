@@ -1,0 +1,1736 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Startpage Console</title>
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&family=Source+Code+Pro:ital,wght@0,200..900;1,200..900&display=swap');
+
+  :root {
+    --bg: #0d1318;
+    --cbg: #0b1014;
+    --grid-color: #04472f;
+    --grid-size: 25px;
+    --grid-thickness: 1px;
+    --primary: #00ffa699;
+    --secondary: #7d72de;
+    --accent: #e49b4e;
+    --accent2: #1a4669;
+    --accent3: #2c95e7;
+    --accent4: #4ae37d;
+    --accent5: #d65dd6;
+    --accent5-fade: #d65dd650; /* semi-transparent version */
+    --dim: #00ffa670;
+  }
+  html, body {
+    height: 100%;
+    margin: 0;
+    font-family: 'Space Mono', 'Source Code Pro', 'Courier New', monospace;
+    background: var(--bg);
+    color: var(--primary);
+  }
+  /* Grid background */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(to right,
+        var(--grid-color) var(--grid-thickness),
+        transparent var(--grid-thickness)
+      ),
+      linear-gradient(to bottom,
+        var(--grid-color) var(--grid-thickness),
+        transparent var(--grid-thickness)
+      );
+    background-size: var(--grid-size) var(--grid-size);
+    opacity: 0.25;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .container {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 1rem;
+  }
+  h1 {
+    font-size: 2rem;
+    color: #00ffa680;
+    margin: 0 0 2rem 0;
+    text-shadow: 4px 4px 0 #00000060;
+  }
+  .panel {
+    width: 90%;
+    max-width: 850px;
+    min-height: 640px;
+    background: #0b1014 url("https://i.imgur.com/2jepPKc.png") no-repeat 0px 24px;
+    border: 1px solid #13212d99;
+    border-radius: 6px;
+    box-shadow: 6px 6px 0 #0b101480;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .titlebar {
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  background: linear-gradient(to top, #0b1014 0%, #13212d70 100%);
+  font-size: 0.65rem;
+  color: var(--dim);
+  border-bottom: none;
+  }
+  .titlebar .buttons {
+    display: flex;
+    gap: 6px;
+  }
+  .titlebar .btn {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .btn.close { background: var(--accent2); }
+  .btn.min { background: var(--accent2); }
+  .btn.max { background: var(--accent2); }
+  
+  .terminal {
+    flex: 1;
+    padding: 1.7rem;
+    color: var(--dim);
+    font-size: 0.75rem;
+    line-height: 1.4;
+    overflow-y: auto;
+  }
+
+  /* Terminal content sections */
+  .section {
+    margin-bottom: 2rem;
+  }
+
+  .section-header {
+    color: var(--secondary);
+    font-weight: bold;
+    font-size: 0.71rem;
+    margin-bottom: 0.6rem;
+    text-transform: uppercase;
+    text-align: left;
+   }
+
+  .divider {
+    color: var(--grid-color);
+    margin: 1rem 0;
+    font-size: 0.8rem;
+  }
+
+  .gradient-label {
+  background: linear-gradient(to bottom, var(--accent5), var(--accent5-fade));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text; /* for Firefox */
+}
+
+  /* Two column layout for main content */
+  .content-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  /* Music streams section */
+  .music-item, .podcast-item, .news-item, .tool-item {
+    display: block;
+    color: var(--primary);
+    text-decoration: none;
+    padding: 0.3rem 0;
+    border-left: 2px solid transparent;
+    padding-left: 0.5rem;
+    transition: all 0.2s;
+    font-size: 0.9em;
+  }
+
+  .music-item:hover, .podcast-item:hover, .news-item:hover, .tool-item:hover {
+    color: var(--accent3);
+    border-left-color: var(--accent2);
+    background: #20639730;
+    cursor: pointer;
+  }
+
+  .status {
+    color: var(--accent2);
+    font-size: 0.6rem;
+    margin-left: 1rem;
+  }
+
+  /* Quick tools section */
+  .tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+
+  .tool-box {
+    border: 1px solid var(--grid-color);
+    padding: 1rem;
+    border-radius: 4px;
+  }
+
+  .tool-title {
+    color: var(--secondary);
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+  }
+
+  /* Search section */
+/* Search section */
+.search-container {
+  display: flex;
+  flex-wrap: wrap;   /* allow wrapping */
+  gap: 0.9rem;      /* add spacing between forms */
+  margin-bottom: 1rem;
+  width: 100%;
+  opacity: 0.8;
+}
+
+.search-container form {
+  flex: 1 1 300px;   /* can shrink and grow, min width 300px */
+  max-width: 100%;   /* don’t exceed container */
+}
+
+.search-input {
+  background: var(--bg);
+  border: 1px solid var(--grid-color);
+  color: var(--primary);
+  padding: 0.5rem;
+  font-family: inherit;
+  font-size: 0.6rem;
+  border-radius: 4px;
+  width: 100%;
+  box-sizing: border-box; /* prevents overflow */
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--secondary);
+  box-shadow: 0 0 5px rgba(162, 89, 255, 0.3);
+}
+
+
+  .system-info {
+    background: linear-gradient(to bottom, #0b1014, #12181e);
+    padding: 0.5rem 1rem;
+    border-top: 1px solid #12181e;
+    font-size: 0.6rem;
+    color: var(--grid-color);
+    display: flex;
+    justify-content: space-between;
+  }
+
+  /* Media Player Styles (single play/pause button) */
+  .media-player {
+    padding: 0.3rem;
+    margin-bottom: 0.5rem;
+    background: #0d131899;
+    border: 1px solid #0c1e2c;
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    max-width: 100%;
+  }
+  .media-player .controls {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  .media-player button {
+            color: var(--bg);
+            font-size: 7px;
+            border: 0;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+            opacity: 0.8;
+            
+            /* Outer ring gradient */
+background: 
+    radial-gradient(circle at 30% 30%, rgba(44, 149, 231, 0.25) 0%, transparent 60%),
+    linear-gradient(135deg, 
+        #1a4669 0%,
+        #163650 25%,
+        #112738 50%,
+        #163650 75%,
+        #1a4669 100%
+    );
+  }
+
+  .media-player button:hover {
+    color: var(--accent3);
+    opacity: 1.0;
+    background: 
+    radial-gradient(circle at 30% 30%, rgba(44, 149, 231, 0.35) 0%, transparent 60%),
+    linear-gradient(135deg, 
+        #245a81 0%,
+        #1f4a6b 25%,
+        #162e45 50%,
+        #1f4a6b 75%,
+        #245a81 100%
+    );
+  }
+  .media-player .stop-btn {}
+  .media-player .playpause-btn.playing { color: var(--primary); border-color: var(--primary); background: rgba(74,227,125,0.04); }
+
+  .progress-bar {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    background: var(--bg);
+    border: 1px dotted var(--grid-color);
+    border-radius: 3px;
+    outline: none;
+    cursor: pointer;
+    flex: 1;
+    margin: 0 0.5rem;
+  }
+  .progress-bar::-webkit-slider-runnable-track {
+    height: 4px;
+    background: linear-gradient(to right, 
+      var(--accent3) 0%, 
+      var(--accent3) var(--progress, 0%), 
+      var(--grid-color) var(--progress, 0%), 
+      var(--grid-color) 100%);
+    border-radius: 2px;
+  }
+  .progress-bar::-moz-range-track {
+    height: 4px;
+    border-radius: 2px;
+    border: none;
+  }
+  .progress-bar::-moz-range-progress {
+    height: 4px;
+    background: var(--accent3);
+    border-radius: 2px;
+  }
+  .progress-bar::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--accent3);
+    cursor: pointer;
+    border: 0px solid var(--bg);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    transition: all 0.15s ease;
+  }
+  .progress-bar::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--bg);
+    cursor: pointer;
+    border: 1px solid var(--accent2);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+
+  .stream-label {
+    display: flex !important;
+    font-size: 0.6rem;
+    font-weight: 600;
+    margin-bottom: 0.2rem;
+    align-items: center;
+    gap: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: linear-gradient(to bottom, var(--accent5), var(--accent5-fade));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text; /* For Firefox */
+    color: transparent; /* fallback */
+    display: none !important;
+  }
+
+  .time-display {
+    color: var(--dim);
+    font-size: 0.65rem;
+    font-family: 'JetBrains Mono', monospace;
+    min-width: 50px;
+    text-align: center;
+  }
+
+  .podcast-playlist {
+    margin-top: 0.4rem;
+    padding-left: 0.6rem;
+    border-left: 1px dashed #083b27;
+  }
+  .podcast-playlist .episode {
+    font-size: 0.65rem;
+    padding: 0.2rem 0;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+    align-items: center;
+  }
+  .podcast-playlist .episode:hover { color: var(--accent3); }
+  .podcast-current {
+    font-size: 0.6rem;
+    color: var(--dim);
+    margin-left: 0.5rem;
+  }
+
+  /* Terminal Notepad Styles */
+  .terminal-notepad {
+    background: var(--bg) url(sym.png) no-repeat 240px 45px;
+    border: 1px dotted var(--grid-color);
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', 'Source Code Pro', monospace;
+    opacity: 0.9;
+  }
+
+  .notepad-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0.75rem;
+    background: rgba(4, 71, 47, 0.1);
+    border-bottom: 1px dotted var(--grid-color);
+    font-size: 0.65rem;
+  }
+
+  .prompt {
+    color: var(--accent3);
+    font-weight: bold;
+  }
+
+  .save-status {
+    color: var(--accent4);
+    font-size: 0.6rem;
+  }
+
+  .notepad-content {
+    width: 380px;
+    height: 180px;
+    background: transparent;
+    border: none;
+    outline: none;
+    resize: none;
+    padding: 0.75rem;
+    color: var(--primary);
+    font-family: inherit;
+    font-size: 0.6rem;
+    line-height: 1.4;
+    min-height: 150px;
+    max-height: 400px;
+  }
+
+  .notepad-content::placeholder {
+    color: var(--dim);
+    opacity: 0.6;
+  }
+
+  .notepad-content:focus {
+    background: rgba(0, 255, 166, 0.02);
+  }
+
+  .notepad-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.4rem 0.75rem;
+    background: rgba(4, 71, 47, 0.05);
+    border-top: 1px dotted var(--grid-color);
+    font-size: 0.6rem;
+    color: var(--dim);
+  }
+
+  .char-count {
+    color: var(--accent2);
+  }
+
+  .last-saved {
+    color: var(--dim);
+  }
+
+  /* Loading states */
+  .loading {
+    color: var(--accent2);
+    font-style: italic;
+    animation: pulse 1.5s ease-in-out infinite alternate;
+  }
+
+  @keyframes pulse {
+    from { opacity: 0.6; }
+    to { opacity: 1.0; }
+  }
+
+  .error {
+    color: var(--accent);
+    font-size: 0.6rem;
+    opacity: 0.8;
+  }
+
+  .skeleton {
+    background: linear-gradient(90deg, var(--bg) 25%, rgba(4, 71, 47, 0.2) 50%, var(--bg) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 4px;
+    height: 1.2em;
+    margin: 0.2rem 0;
+  }
+
+#links-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* center the entire section */
+}
+
+.header-container {
+  width: 100%; /* full width of parent container */
+}
+
+.links-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  width: max-content; /* shrink-wrap to content */
+}
+
+.link-category-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* keep label left-aligned */
+}
+
+.link-category-label {
+  color: var(--accent2);
+  font-size: 0.6rem;
+  font-weight: bold;
+  margin-bottom: 0.1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.link-category {
+  background: rgba(4, 71, 47, 0.1);
+  border: 1px dotted var(--grid-color);
+  padding: 0.5rem 0.75rem;
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  min-width: 120px;
+  margin-bottom: 30px;
+}
+
+.link-category:hover {
+  border-color: var(--accent2);
+}
+
+.link-category a {
+  color: var(--dim);
+  text-decoration: none;
+  padding: 0.2rem 0;
+  font-size: 0.7rem;
+  transition: all 0.2s;
+}
+
+.link-category a:hover {
+  color: var(--accent3);
+}
+
+.retro-section {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap; /* keeps it responsive on smaller screens */
+}
+
+.retro-links {
+  font-size: 0.67rem;
+  color: var(--accent3);
+  opacity: 0.6;
+}
+
+.retro-links a {
+  color: var(--accent5);
+  text-decoration: none;
+}
+
+.retro-links a:hover {
+  color: var(--accent4);
+}
+
+/* Responsive tweaks */
+@media (max-width: 900px) {
+  .links-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .search-container form {
+     flex: 1 1 100%;  /* stack vertically */
+  }
+}
+
+@media (max-width: 500px) {
+  .links-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  @media (max-width: 900px) {
+    .content-grid {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+    .media-player {
+      flex-wrap: wrap;
+      gap: 0.25rem;
+    }
+    .media-player button {
+      flex: 1;
+      min-width: 60px;
+    }
+    .progress-bar {
+      order: 3;
+      width: 100%;
+      margin: 0.25rem 0 0 0;
+    }
+    .notepad-content {
+      width: 100%;
+      height: 150px;
+    }
+    .system-info {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="panel">
+      <div class="titlebar">
+        <div class="buttons">
+          <span class="btn close"></span>
+          <span class="btn min"></span>
+          <span class="btn max"></span>
+        </div>
+        <span>user@machine: ~</span>
+      </div>
+      <div class="terminal">
+        <div class="section">
+          <div class="section-header">[SEARCH PROTOCOLS]</div>
+          <div class="search-container">
+                <form action="https://www.google.com/search" method="get" target="_blank">
+                <input type="text" name="q" class="search-input" placeholder="Google Search..." />
+             </form>
+                <form action="https://duckduckgo.com/" method="get" target="_blank">
+                <input type="text" name="q" class="search-input" placeholder="DuckDuckGo Search..." />
+              </form>
+          </div>
+        </div>
+
+<div class="content-grid">
+  <!-- LEFT COLUMN -->
+  <div>
+<div class="section">
+              <div class="section-header">[AUDIO STREAMS - CODING MUSIC]</div>
+
+              <div class="stream-label">Blade Runner Radio <span class="status">● LIVE</span></div>
+              <div class="yt-stream" data-video="RrkrdYm3HPQ" id="yt-stream-1">
+                <!-- controls will be injected -->
+              </div>
+
+              <div class="stream-label">Lofi Girl Synthwave <span class="status">● LIVE</span></div>
+              <div class="yt-stream" data-video="4xDzrJKXOOY" id="yt-stream-2">
+                <!-- controls will be injected -->
+              </div>
+
+              <div class="stream-label">Terminal 1987 <span class="status">● LIVE</span></div>
+              <div class="yt-stream" data-video="gopYmb38DgM" id="yt-stream-3">
+                <!-- controls will be injected -->
+              </div>
+              <div class="stream-label">Art of Minimal <span class="status">● LIVE</span></div>
+              <div class="yt-stream" data-video="UYOb37KRFqk" id="yt-stream-4">
+                <!-- controls will be injected -->
+              </div>
+              <div class="stream-label">DARK CARGO MIX</div>
+              <div class="yt-stream" data-video="gOBI0fR5Rak" id="yt-stream-5">
+                <!-- controls will be injected -->
+              </div>
+              <div class="section-header">[AUDIO STREAMS - NEWS]</div>
+              <div class="stream-label">NBC News Now <span class="status">● LIVE</span></div>
+              <div class="yt-stream" data-video="dbfAv13Jcvg" id="yt-stream-6">
+                <!-- controls will be injected -->
+              </div>
+
+            </div>
+
+    <div class="section-header">[News Feeds]</div>
+
+    <!-- NEWS MOVED UP -->
+    <div class="section" id="news-section">
+      <div class="section-header">[NEWS FEEDS]</div>
+      <!-- News feeds will be populated here -->
+    </div>
+  </div>
+
+  <!-- RIGHT COLUMN -->
+  <div>
+    <div class="section">
+      <div class="section-header">[PODCAST FEEDS]</div>
+      <div id="podcast-feeds-container">
+        <!-- Podcast feeds will be populated here -->
+      </div>
+    </div>
+
+    <!-- NOTEPAD MOVED HERE -->
+    <div class="section">
+      <div class="section-header">[TERMINAL NOTEPAD]</div>
+      <div class="terminal-notepad">
+        <div class="notepad-header">
+          <span class="prompt">user@machine:~/notes$ </span>
+          <span class="save-status" id="save-status"></span>
+        </div>
+        <textarea 
+          id="notepad-textarea" 
+          class="notepad-content" 
+          placeholder="# Terminal Notes
+> Type your notes here...
+> Auto-saves as you type"
+          spellcheck="false"></textarea>
+        <div class="notepad-footer">
+          <span class="char-count" id="char-count">0 chars</span>
+          <span class="last-saved" id="last-saved"></span>
+        </div>
+      </div>
+    </div>
+
+
+    
+    <div class="retro-section">
+  <div>
+    <div class="section-header">[ RETRO LINKS ]</div>
+    <div class="retro-links">
+      <pre>
+  ├─ Hacker Zines
+  │   ├─ <a href="http://phrack.org" target="_blank">Phrack Magazine</a>
+  │   ├─ <a href="https://www.2600.com" target="_blank">2600 Magazine</a>
+  │   ├─ <a href="http://textfiles.com/magazines/" target="_blank">Textfiles Zine Archive</a>
+  │   └─ <a href="https://hacktic.nl" target="_blank">Hack-Tic</a>
+  ├─ Net Culture
+  │   ├─ <a href="https://theoldnet.com" target="_blank">The Old Net</a>
+  │   ├─ <a href="https://archive.org/details/geocities" target="_blank">GeoCities Archive</a>
+  │   └─ <a href="https://winamp2-js.github.io/" target="_blank">Webamp</a>
+  ├─ Hacker Toys
+  │   ├─ <a href="https://gchq.github.io/CyberChef/" target="_blank">CyberChef</a>
+  │   ├─ <a href="https://www.asciiart.eu/" target="_blank">ASCII Art Archive</a>
+  │   └─ <a href="https://classicreload.com/zork-i.html" target="_blank">Play Zork</a>
+      </pre>
+    </div>
+  </div>
+
+  <div>
+    <div class="section-header">[ RETRO GAMES ]</div>
+    <div class="retro-links">
+      <pre>
+  ├─ NetHack
+  │   ├─ <a href="https://www.jwhitham.org/tilehack/" target="_blank">TileHack (Online)</a>
+  │   ├─ <a href="https://github.com/coolwanglu/BrowserHack" target="_blank">BrowserHack</a>
+  │   └─ <a href="https://nethackwiki.com/wiki/Graphical_user_interface" target="_blank">GUI/Tiles Wiki</a>
+  ├─ Roguelikes
+  │   ├─ <a href="https://crawl.akrasiac.org:8443" target="_blank">Dungeon Crawl Stone Soup</a>
+  │   ├─ <a href="https://www.adom.de/home/" target="_blank">ADOM</a>
+  │   ├─ <a href="https://rephial.org/" target="_blank">Angband</a>
+  │   └─ <a href="https://te4.org/" target="_blank">Tales of Maj’Eyal</a>
+  ├─ Classic Adventure
+  │   ├─ <a href="https://iplayif.com/" target="_blank">Interactive Fiction (IF)</a>
+  │   ├─ <a href="https://classicreload.com/zork-i.html" target="_blank">Zork I</a>
+  │   ├─ <a href="https://classicreload.com/king-s-quest.html" target="_blank">King’s Quest</a>
+  │   └─ <a href="https://classicreload.com/space-quest.html" target="_blank">Space Quest</a>
+
+      </pre>
+    </div>
+  </div>
+</div>
+
+  </div>
+</div>
+
+
+<section id="links-section">
+    <div class="header-container">
+    <div class="section-header">[LINKS]</div>
+  </div>
+  <div class="links-grid">
+
+    <div class="link-category-wrapper">
+      <div class="link-category-label">AI Prompts</div>
+      <div class="link-category">
+        <a href="https://prompts.chatgpt.com">ChatGPT Prompt Hub</a>
+        <a href="https://awesome-chatgpt-prompts.vercel.app/">Awesome ChatGPT Prompts</a>
+        <a href="https://prompthero.com/">PromptHero AI Prompts</a>
+        <a href="https://flowgpt.com/">FlowGPT</a>
+      </div>
+    </div>
+
+    <div class="link-category-wrapper">
+      <div class="link-category-label">AI Image Prompts</div>
+      <div class="link-category">
+        <a href="https://lexica.art/">Lexica Art</a>
+        <a href="https://www.promptbase.com/">PromptBase</a>
+        <a href="https://www.artbreeder.com/">Artbreeder</a>
+        <a href="https://www.midjourney.com/">MidJourney Gallery</a>
+      </div>
+    </div>
+
+    <div class="link-category-wrapper">
+      <div class="link-category-label">Graphic Art</div>
+      <div class="link-category">
+        <a href="https://dribbble.com/">Dribbble</a>
+        <a href="https://www.behance.net/">Behance</a>
+        <a href="https://www.deviantart.com/">DeviantArt</a>
+        <a href="https://www.artstation.com/">ArtStation</a>
+      </div>
+    </div>
+
+    <div class="link-category-wrapper">
+      <div class="link-category-label">Social Media</div>
+      <div class="link-category">
+        <a href="https://twitter.com/">Twitter / X</a>
+        <a href="https://www.instagram.com/">Instagram</a>
+        <a href="https://www.reddit.com/r/artificial/">Reddit AI Communities</a>
+        <a href="https://www.tiktok.com/">TikTok</a>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+    </div>
+      <div class="system-info">
+        <span>UPTIME: 42:13:37 | CPU: 23% | RAM: 8.4GB/16GB | NETWORK: ▲142KB/s ▼1.2MB/s</span>
+        <span>LOCALHOST:3000 | SECURE CONNECTION</span>
+      </div>
+
+  </div>
+
+  <!-- Hidden container for YouTube iframes -->
+  <div id="youtube-players" style="display:none;"></div>
+
+  <!-- YouTube Iframe API -->
+  <script src="https://www.youtube.com/iframe_api"></script>
+
+<script>
+/*****************************************************************************
+ * Entertainment Console - Simplified News Version
+ *
+ * Key optimizations:
+ * 1. Multiple proxy fallbacks for better reliability
+ * 2. Concurrent loading with Promise.allSettled
+ * 3. Improved caching with compression
+ * 4. Background refresh strategy
+ * 5. Better error handling and retries
+ * 6. Skeleton loading states
+ * 7. Graceful degradation
+ * 8. Simplified unified news feeds
+ *****************************************************************************/
+
+// Multiple proxy services for fallback
+const PROXIES = [
+  url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+  url => `https://cors-anywhere.herokuapp.com/${url}`,
+  url => `https://thingproxy.freeboard.io/fetch/${url}`,
+  url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
+];
+
+const PODCAST_FEEDS = [
+  { id: 'hacker', name: 'Hacker News Recap', url: 'https://feeds.buzzsprout.com/2170103.rss' },
+  { id: 'npr', name: 'NPR News', url: 'https://feeds.npr.org/500005/podcast.xml' },
+  { id: 'pbs', name: 'PBS Newshour', url: 'https://www.pbs.org/newshour/feeds/rss/podcasts/show' }
+];
+
+const NEWS_FEEDS = [
+  { name: 'WORLD', url: 'https://rss.nytimes.com/services/xml/rss/nyt/World.xml' },
+  { name: 'POLITICS', url: 'https://rss.nytimes.com/services/xml/rss/nyt/Politics.xml' },
+  { name: 'TECH', url: 'https://www.theverge.com/rss/index.xml' },
+  { name: 'SCIENCE', url: 'https://rss.nytimes.com/services/xml/rss/nyt/Science.xml' }
+];
+
+const EPISODES_PER_FEED = 2;
+const CACHE_TTL_MINUTES = 60; // Longer cache for better performance
+const BACKGROUND_REFRESH_MINUTES = 60;
+
+const audioPlayers = [];
+const ytPlayers = {};
+let currentPlaying = null;
+
+// ---- Enhanced Fetch with Multiple Proxies ----
+async function robustFetch(url, retries = 3) {
+  const errors = [];
+  
+  // Try direct fetch first (might work in some browsers/contexts)
+  try {
+    const directResponse = await fetch(url, { 
+      mode: 'cors',
+      headers: { 'Accept': 'application/rss+xml, application/xml, text/xml' }
+    });
+    if (directResponse.ok) return directResponse;
+  } catch (e) {
+    errors.push(`Direct: ${e.message}`);
+  }
+
+  // Try each proxy
+  for (let proxyIndex = 0; proxyIndex < PROXIES.length; proxyIndex++) {
+    for (let attempt = 0; attempt < retries; attempt++) {
+      try {
+        const proxyUrl = PROXIES[proxyIndex](url);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
+        
+        const response = await fetch(proxyUrl, {
+          signal: controller.signal,
+          headers: { 'Accept': 'application/rss+xml, application/xml, text/xml' }
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (response.ok) {
+          const text = await response.text();
+          if (text.includes('<?xml') || text.includes('<rss') || text.includes('<feed')) {
+            return { text: () => Promise.resolve(text), ok: true };
+          }
+        }
+      } catch (e) {
+        errors.push(`Proxy ${proxyIndex + 1}, attempt ${attempt + 1}: ${e.message}`);
+        if (attempt < retries - 1) {
+          await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1))); // Exponential backoff
+        }
+      }
+    }
+  }
+  
+  throw new Error(`All proxies failed: ${errors.join('; ')}`);
+}
+
+// ---- Enhanced Caching ----
+function compressString(str) {
+  // Simple compression - remove extra whitespace
+  return str.replace(/>\s+</g, '><').replace(/\s+/g, ' ').trim();
+}
+
+async function cachedFetchXML(url, cacheKey, ttlMinutes = CACHE_TTL_MINUTES) {
+  const now = Date.now();
+  const cached = localStorage.getItem(cacheKey);
+  
+  if (cached) {
+    try {
+      const { timestamp, data, compressed } = JSON.parse(cached);
+      if (now - timestamp < ttlMinutes * 60 * 1000) {
+        const xmlText = compressed ? data : data; // Expand if needed
+        return new DOMParser().parseFromString(xmlText, "application/xml");
+      }
+    } catch (e) {
+      console.warn(`Cache parse error for ${cacheKey}:`, e);
+    }
+  }
+
+  try {
+    const response = await robustFetch(url);
+    const text = await response.text();
+    
+    // Compress and cache
+    const compressed = compressString(text);
+    localStorage.setItem(cacheKey, JSON.stringify({ 
+      timestamp: now, 
+      data: compressed,
+      compressed: true 
+    }));
+    
+    return new DOMParser().parseFromString(text, "application/xml");
+  } catch (error) {
+    // If fetch fails but we have expired cache, use it
+    if (cached) {
+      try {
+        const { data } = JSON.parse(cached);
+        console.warn(`Using expired cache for ${cacheKey} due to fetch error:`, error);
+        return new DOMParser().parseFromString(data, "application/xml");
+      } catch (e) {
+        console.error(`Cache fallback failed for ${cacheKey}:`, e);
+      }
+    }
+    throw error;
+  }
+}
+
+// ---- UI Helpers ----
+function createSkeleton(count = 3) {
+  const container = document.createElement('div');
+  for (let i = 0; i < count; i++) {
+    const skeleton = document.createElement('div');
+    skeleton.className = 'skeleton';
+    skeleton.style.width = `${60 + Math.random() * 30}%`;
+    container.appendChild(skeleton);
+  }
+  return container;
+}
+
+function showLoadingState(container, text = 'Loading...') {
+  container.innerHTML = `<div class="loading">${text}</div>`;
+  container.appendChild(createSkeleton());
+}
+
+function showErrorState(container, error, showRetry = false) {
+  const errorDiv = document.createElement('div');
+  errorDiv.className = 'error';
+  errorDiv.textContent = `Failed to load: ${error.message}`;
+  
+  if (showRetry) {
+    const retryBtn = document.createElement('button');
+    retryBtn.textContent = 'Retry';
+    retryBtn.style.marginLeft = '0.5rem';
+    retryBtn.style.fontSize = '0.6rem';
+    retryBtn.onclick = () => window.location.reload();
+    errorDiv.appendChild(retryBtn);
+  }
+  
+  container.innerHTML = '';
+  container.appendChild(errorDiv);
+}
+
+// ---- Utility Functions ----
+function timeAgo(pubDate) {
+  const then = new Date(pubDate);
+  if (isNaN(then)) return '';
+  const diff = (Date.now() - then.getTime()) / 1000;
+  if (diff < 60) return `${Math.floor(diff)}s ago`;
+  if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff/3600)}h ago`;
+  return `${Math.floor(diff/86400)}d ago`;
+}
+
+function fmtTime(seconds) {
+  if (!isFinite(seconds) || isNaN(seconds)) return '--:--';
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60).toString().padStart(2, '0');
+  return `${m}:${s}`;
+}
+
+// ---- Media Player Controls ----
+function makeAudioPlayerUI({ id, initialTitle = 'No episode loaded' }) {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'media-player';
+  wrapper.dataset.playerId = id;
+
+  const controls = document.createElement('div');
+  controls.className = 'controls';
+
+  const playPauseBtn = document.createElement('button');
+  playPauseBtn.className = 'playpause-btn';
+  playPauseBtn.textContent = '▶';
+  playPauseBtn.title = 'Play / Pause';
+
+  const stopBtn = document.createElement('button');
+  stopBtn.className = 'stop-btn';
+  stopBtn.textContent = '⏹';
+  stopBtn.title = 'Stop';
+
+  controls.appendChild(playPauseBtn);
+  controls.appendChild(stopBtn);
+
+  const progress = document.createElement('input');
+  progress.type = 'range';
+  progress.className = 'progress-bar';
+  progress.min = 0; progress.max = 100; progress.step = 0.1; progress.value = 0;
+
+  const timeDisplay = document.createElement('span');
+  timeDisplay.className = 'time-display';
+  timeDisplay.textContent = '--:--';
+
+  const meta = document.createElement('div');
+  meta.style.display = 'flex';
+  meta.style.flexDirection = 'column';
+  meta.style.marginLeft = '0.5rem';
+  meta.style.flex = '0 0 45%';
+
+  const titleEl = document.createElement('div');
+  titleEl.style.fontSize = '0.6rem';
+  titleEl.style.color = 'var(--accent3)';
+  titleEl.textContent = initialTitle;
+
+  const currentEl = document.createElement('div');
+  currentEl.className = 'podcast-current';
+
+  meta.appendChild(titleEl);
+  meta.appendChild(currentEl);
+
+  const audio = document.createElement('audio');
+  audio.preload = 'metadata';
+  audio.style.display = 'none';
+
+  wrapper.appendChild(controls);
+  wrapper.appendChild(progress);
+  wrapper.appendChild(timeDisplay);
+  wrapper.appendChild(meta);
+  wrapper.appendChild(audio);
+
+  return { wrapper, audio, playPauseBtn, stopBtn, progress, timeDisplay, titleEl, currentEl };
+}
+
+function makeYouTubePlayerUI({ id, label = 'YouTube Stream' }) {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'media-player';
+  wrapper.dataset.playerId = id;
+
+  const controls = document.createElement('div');
+  controls.className = 'controls';
+
+  const playPauseBtn = document.createElement('button');
+  playPauseBtn.className = 'playpause-btn';
+  playPauseBtn.textContent = '▶';
+
+  const stopBtn = document.createElement('button');
+  stopBtn.className = 'stop-btn';
+  stopBtn.textContent = '⏹';
+
+  controls.appendChild(playPauseBtn);
+  controls.appendChild(stopBtn);
+
+  const progress = document.createElement('input');
+  progress.type = 'range';
+  progress.className = 'progress-bar';
+  progress.min = 0; progress.max = 100; progress.step = 0.1; progress.value = 0;
+
+  const timeDisplay = document.createElement('span');
+  timeDisplay.className = 'time-display';
+  timeDisplay.textContent = '--:--';
+
+  const meta = document.createElement('div');
+  meta.style.display = 'flex';
+  meta.style.flexDirection = 'column';
+  meta.style.marginLeft = '0.5rem';
+  meta.style.flex = '0 0 45%';
+
+  const titleEl = document.createElement('div');
+  titleEl.style.fontSize = '0.6rem';
+  titleEl.style.color = 'var(--accent3)';
+  titleEl.textContent = label;
+
+  const currentEl = document.createElement('div');
+  currentEl.className = 'podcast-current';
+  currentEl.textContent = 'YouTube stream';
+
+  meta.appendChild(titleEl);
+  meta.appendChild(currentEl);
+
+  wrapper.appendChild(controls);
+  wrapper.appendChild(progress);
+  wrapper.appendChild(timeDisplay);
+  wrapper.appendChild(meta);
+
+  return { wrapper, playPauseBtn, stopBtn, progress, timeDisplay, titleEl, currentEl };
+}
+
+// ---- Media Control Helpers ----
+function pauseAllAudio(exceptAudio = null) {
+  audioPlayers.forEach(({ audio }) => {
+    if (audio !== exceptAudio && !audio.paused) audio.pause();
+  });
+}
+
+function pauseAllYT(exceptId = null) {
+  for (const id in ytPlayers) {
+    if (id === exceptId) continue;
+    const obj = ytPlayers[id];
+    try {
+      const st = obj.player.getPlayerState();
+      if (st === YT.PlayerState.PLAYING || st === YT.PlayerState.BUFFERING) {
+        obj.player.pauseVideo();
+      }
+    } catch (e) {
+      console.warn('Error pausing YT player:', e);
+    }
+  }
+}
+
+// ---- Optimized Podcast Loading ----
+async function loadPodcasts() {
+  const container = document.getElementById('podcast-feeds-container');
+  if (!container) return;
+
+  // Show loading state immediately
+  showLoadingState(container, 'Loading podcast feeds...');
+
+  // Load all feeds concurrently
+  const feedPromises = PODCAST_FEEDS.map(async (feed) => {
+    const feedBox = document.createElement('div');
+    feedBox.style.marginBottom = '1rem';
+    
+    const header = document.createElement('div');
+    header.className = 'stream-label';
+    header.textContent = feed.name;
+    feedBox.appendChild(header);
+
+    const playerId = `pod-audio-${feed.id}`;
+    const ui = makeAudioPlayerUI({ 
+      id: playerId, 
+      initialTitle: `${feed.name} — loading episodes...` 
+    });
+    feedBox.appendChild(ui.wrapper);
+
+    const playlist = document.createElement('div');
+    playlist.className = 'podcast-playlist';
+    playlist.appendChild(createSkeleton(EPISODES_PER_FEED));
+    feedBox.appendChild(playlist);
+
+    const { audio, playPauseBtn, stopBtn, progress, timeDisplay, titleEl, currentEl } = ui;
+    audioPlayers.push({ audio, containerId: playerId, ui });
+
+    // Set up controls
+    setupAudioControls(audio, playPauseBtn, stopBtn, progress, timeDisplay, playerId);
+
+    try {
+      const xml = await cachedFetchXML(feed.url, `podcast-${feed.id}`);
+      let items = Array.from(xml.querySelectorAll('item'));
+      if (items.length === 0) items = Array.from(xml.querySelectorAll('entry'));
+      
+      if (items.length === 0) {
+        playlist.innerHTML = '<div class="error">No episodes found</div>';
+        titleEl.textContent = `${feed.name} — no episodes`;
+        return feedBox;
+      }
+
+      // Clear loading skeleton
+      playlist.innerHTML = '';
+      titleEl.textContent = `${feed.name}`;
+
+      // Process episodes
+      const episodes = items.slice(0, EPISODES_PER_FEED).map((item, idx) => {
+        const epTitle = item.querySelector('title')?.textContent.trim() || `Episode ${idx+1}`;
+        const pubNode = item.querySelector('pubDate, updated, published');
+        const pubDate = pubNode ? pubNode.textContent : '';
+        
+        // Find audio URL with multiple fallback methods
+        let audioUrl = item.querySelector('enclosure')?.getAttribute('url')
+          || item.querySelector('media\\:content, content[medium="audio"]')?.getAttribute('url')
+          || item.querySelector('link[rel="enclosure"]')?.getAttribute('href');
+        
+        if (!audioUrl) {
+          const content = item.innerHTML || '';
+          const urlMatch = content.match(/https?:\/\/[^'">\s]+\.mp3(\?[^'">\s]*)?/i);
+          if (urlMatch) audioUrl = urlMatch[0];
+        }
+
+        return { epTitle, pubDate, audioUrl, item };
+      });
+
+      // Render episodes
+      episodes.forEach(({ epTitle, pubDate, audioUrl }) => {
+        const epRow = document.createElement('div');
+        epRow.className = 'episode';
+        epRow.innerHTML = `
+          <div>${epTitle}</div>
+          <div class="status">${pubDate ? timeAgo(pubDate) : ''}</div>
+        `;
+        
+        if (audioUrl) {
+          epRow.addEventListener('click', () => {
+            loadEpisode(audio, titleEl, currentEl, feed.name, epTitle, audioUrl, pubDate, playerId);
+          });
+        } else {
+          epRow.style.opacity = '0.5';
+          epRow.style.cursor = 'not-allowed';
+          epRow.title = 'No audio URL found';
+        }
+        
+        playlist.appendChild(epRow);
+      });
+
+    } catch (error) {
+      console.error(`Failed to load ${feed.name}:`, error);
+      playlist.innerHTML = `<div class="error">Failed to load: ${error.message}</div>`;
+      titleEl.textContent = `${feed.name} — error`;
+    }
+
+    return feedBox;
+  });
+
+  try {
+    // Wait for all feeds to complete (success or failure)
+    const results = await Promise.allSettled(feedPromises);
+    
+    // Clear loading state and show results
+    container.innerHTML = '';
+    
+    results.forEach((result, index) => {
+      if (result.status === 'fulfilled') {
+        container.appendChild(result.value);
+      } else {
+        // Show error state for failed feeds
+        const errorBox = document.createElement('div');
+        errorBox.style.marginBottom = '1rem';
+        const feed = PODCAST_FEEDS[index];
+        showErrorState(errorBox, new Error(`${feed.name}: ${result.reason.message}`));
+        container.appendChild(errorBox);
+      }
+    });
+
+    // Schedule background refresh
+    setTimeout(() => {
+      refreshPodcastsInBackground();
+    }, BACKGROUND_REFRESH_MINUTES * 60 * 1000);
+
+  } catch (error) {
+    showErrorState(container, error, true);
+  }
+}
+
+function setupAudioControls(audio, playPauseBtn, stopBtn, progress, timeDisplay, playerId) {
+  playPauseBtn.addEventListener('click', () => {
+    if (!audio.src) return;
+    
+    if (audio.paused) {
+      pauseAllYT(null);
+      pauseAllAudio(audio);
+      audio.play().catch(e => console.error('Audio play failed:', e));
+    } else {
+      audio.pause();
+    }
+  });
+
+  stopBtn.addEventListener('click', () => {
+    audio.pause();
+    audio.currentTime = 0;
+    progress.value = 0;
+    progress.style.setProperty('--progress', '0%');
+    timeDisplay.textContent = '--:--';
+    playPauseBtn.textContent = '▶';
+    currentPlaying = null;
+  });
+
+  let progressTimer = null;
+
+  audio.addEventListener('play', () => {
+    pauseAllYT(null);
+    pauseAllAudio(audio);
+    playPauseBtn.textContent = '⏸';
+    currentPlaying = { type: 'audio', id: playerId };
+    
+    if (progressTimer) clearInterval(progressTimer);
+    progressTimer = setInterval(() => {
+      if (audio.duration > 0) {
+        const pct = (audio.currentTime / audio.duration) * 100;
+        progress.value = pct;
+        progress.style.setProperty('--progress', pct + '%');
+        timeDisplay.textContent = fmtTime(audio.currentTime);
+      }
+    }, 500);
+  });
+
+  audio.addEventListener('pause', () => {
+    playPauseBtn.textContent = '▶';
+    if (progressTimer) {
+      clearInterval(progressTimer);
+      progressTimer = null;
+    }
+  });
+
+  audio.addEventListener('ended', () => {
+    playPauseBtn.textContent = '▶';
+    currentPlaying = null;
+    if (progressTimer) {
+      clearInterval(progressTimer);
+      progressTimer = null;
+    }
+  });
+
+  audio.addEventListener('error', (e) => {
+    console.error('Audio error:', e);
+    playPauseBtn.textContent = '▶';
+    timeDisplay.textContent = 'ERROR';
+  });
+}
+
+function loadEpisode(audio, titleEl, currentEl, feedName, epTitle, audioUrl, pubDate, playerId) {
+  audio.src = audioUrl;
+  titleEl.textContent = `${feedName} — ${epTitle}`;
+  currentEl.textContent = pubDate ? timeAgo(pubDate) : 'Loading...';
+  
+  pauseAllYT(null);
+  pauseAllAudio(audio);
+  
+  audio.play()
+    .then(() => {
+      currentPlaying = { type: 'audio', id: playerId };
+    })
+    .catch(error => {
+      console.error('Failed to play audio:', error);
+      currentEl.textContent = 'Playback failed';
+    });
+}
+
+async function refreshPodcastsInBackground() {
+  console.log('Background refresh of podcast feeds...');
+  try {
+    // Refresh cache for all feeds
+    await Promise.allSettled(
+      PODCAST_FEEDS.map(feed => 
+        cachedFetchXML(feed.url, `podcast-${feed.id}`, 0) // Force refresh
+      )
+    );
+    console.log('Background podcast refresh completed');
+  } catch (error) {
+    console.warn('Background podcast refresh failed:', error);
+  }
+}
+
+// ---- Simplified News Loading ----
+async function loadNews() {
+  const container = document.getElementById('news-section');
+  if (!container) return;
+
+  // Show loading state
+  showLoadingState(container.querySelector('.section-header') ? container : (() => {
+    const header = document.createElement('div');
+    header.className = 'section-header';
+    header.textContent = '[NEWS FEEDS]';
+    container.insertBefore(header, container.firstChild);
+    return container;
+  })(), 'Loading news feeds...');
+
+  // Load all news feeds concurrently
+  const feedPromises = NEWS_FEEDS.map(async (feed) => {
+    try {
+      const xml = await cachedFetchXML(feed.url, `news-${feed.name.toLowerCase()}`);
+      let items = Array.from(xml.querySelectorAll('item'));
+      if (items.length === 0) items = Array.from(xml.querySelectorAll('entry'));
+      
+      // Return top 4 items for each feed
+      return {
+        name: feed.name,
+        items: items.slice(0, 4).map(item => {
+          const title = item.querySelector('title')?.textContent || 'No title';
+          let link = item.querySelector('link')?.getAttribute('href') 
+            || item.querySelector('link')?.textContent 
+            || item.querySelector('guid')?.textContent 
+            || '#';
+          
+          const pub = item.querySelector('pubDate, updated, published');
+          const timeAgoText = pub ? timeAgo(pub.textContent) : '';
+
+          return { title, link, timeAgoText };
+        })
+      };
+    } catch (error) {
+      console.error(`Failed to load ${feed.name} news:`, error);
+      return {
+        name: feed.name,
+        error: error.message,
+        items: []
+      };
+    }
+  });
+
+  try {
+    const results = await Promise.allSettled(feedPromises);
+    
+    // Clear loading state but keep header
+    const header = container.querySelector('.section-header');
+    container.innerHTML = '';
+    if (header) container.appendChild(header);
+
+    // Process each feed result
+    results.forEach((result, index) => {
+      const feedData = result.status === 'fulfilled' ? result.value : {
+        name: NEWS_FEEDS[index].name,
+        error: result.reason?.message || 'Unknown error',
+        items: []
+      };
+
+      // Create feed section
+      const feedSection = document.createElement('div');
+      feedSection.style.marginBottom = '1.5rem';
+      
+      const feedHeader = document.createElement('div');
+      feedHeader.className = 'section-header';
+      feedHeader.style.fontSize = '0.65rem';
+      feedHeader.style.marginBottom = '0.5rem';
+      feedHeader.style.color = 'var(--accent2)';
+      feedHeader.textContent = `[${feedData.name}]`;
+      feedSection.appendChild(feedHeader);
+
+      if (feedData.error) {
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error';
+        errorDiv.textContent = `Failed to load: ${feedData.error}`;
+        feedSection.appendChild(errorDiv);
+      } else if (feedData.items.length === 0) {
+        const emptyDiv = document.createElement('div');
+        emptyDiv.className = 'error';
+        emptyDiv.textContent = 'No news items found';
+        feedSection.appendChild(emptyDiv);
+      } else {
+        // Render news items
+        feedData.items.forEach(({ title, link, timeAgoText }) => {
+          const newsItem = document.createElement('a');
+          newsItem.className = 'news-item';
+          newsItem.target = '_blank';
+          newsItem.rel = 'noopener noreferrer';
+          newsItem.href = link;
+          newsItem.innerHTML = `📰 ${title} <span class="status">${timeAgoText}</span>`;
+          feedSection.appendChild(newsItem);
+        });
+      }
+
+      container.appendChild(feedSection);
+    });
+
+  } catch (error) {
+    showErrorState(container, error, true);
+  }
+}
+
+// ---- YouTube Setup (unchanged but with better error handling) ----
+function onYouTubeIframeAPIReady() {
+  const ytNodes = document.querySelectorAll('.yt-stream');
+  ytNodes.forEach((node, idx) => {
+    const videoId = node.dataset.video;
+    const uid = `yt-player-${idx}`;
+    const label = node.previousElementSibling?.textContent.trim() || 'YouTube Stream';
+    const ui = makeYouTubePlayerUI({ id: uid, label });
+    
+    node.innerHTML = '';
+    node.appendChild(ui.wrapper);
+
+    const iframeHolder = document.createElement('div');
+    iframeHolder.id = uid;
+    iframeHolder.style.display = 'none';
+    document.getElementById('youtube-players').appendChild(iframeHolder);
+
+    try {
+      const player = new YT.Player(uid, {
+        videoId,
+        playerVars: { playsinline: 1, controls: 0, rel: 0, disablekb: 1 },
+        events: {
+          onReady: () => {
+            ytPlayers[uid] = { player, ui };
+            attachYTUIControls(uid, player, ui);
+          },
+          onStateChange: (e) => handleYTStateChange(uid, e),
+          onError: (e) => {
+            console.error(`YouTube player ${uid} error:`, e);
+            ui.currentEl.textContent = 'Stream unavailable';
+          }
+        }
+      });
+    } catch (error) {
+      console.error(`Failed to create YouTube player ${uid}:`, error);
+      ui.currentEl.textContent = 'Failed to load';
+    }
+  });
+}
+
+function attachYTUIControls(uid, player, ui) {
+  const { playPauseBtn, stopBtn, progress, timeDisplay } = ui;
+  
+  playPauseBtn.addEventListener('click', () => {
+    try {
+      const state = player.getPlayerState();
+      if (state === YT.PlayerState.PLAYING) {
+        player.pauseVideo();
+      } else {
+        pauseAllAudio(null);
+        pauseAllYT(uid);
+        player.playVideo();
+      }
+    } catch (error) {
+      console.error('YouTube control error:', error);
+    }
+  });
+
+  stopBtn.addEventListener('click', () => {
+    try {
+      player.stopVideo();
+      playPauseBtn.textContent = '▶';
+      progress.value = 0;
+      progress.style.setProperty('--progress', '0%');
+      timeDisplay.textContent = '--:--';
+      currentPlaying = null;
+    } catch (error) {
+      console.error('YouTube stop error:', error);
+    }
+  });
+
+  // Update progress
+  setInterval(() => {
+    try {
+      const duration = player.getDuration();
+      const current = player.getCurrentTime();
+      if (isFinite(duration) && duration > 0) {
+        const pct = (current / duration) * 100;
+        progress.value = pct;
+        progress.style.setProperty('--progress', pct + '%');
+        timeDisplay.textContent = fmtTime(current);
+      }
+    } catch (error) {
+      // Silently handle errors during progress updates
+    }
+  }, 1000);
+}
+
+function handleYTStateChange(uid, e) {
+  const ui = ytPlayers[uid]?.ui;
+  if (!ui) return;
+
+  const btn = ui.playPauseBtn;
+  if (e.data === YT.PlayerState.PLAYING) {
+    pauseAllAudio(null);
+    pauseAllYT(uid);
+    btn.textContent = '⏸';
+    currentPlaying = { type: 'yt', id: uid };
+  }
+  if (e.data === YT.PlayerState.PAUSED || e.data === YT.PlayerState.ENDED) {
+    btn.textContent = '▶';
+    if (currentPlaying?.id === uid) currentPlaying = null;
+  }
+}
+
+// ---- Terminal Notepad (unchanged) ----
+function initTerminalNotepad() {
+  const textarea = document.getElementById('notepad-textarea');
+  const saveStatus = document.getElementById('save-status');
+  const charCount = document.getElementById('char-count');
+  const lastSaved = document.getElementById('last-saved');
+  
+  const STORAGE_KEY = 'terminal-notepad-content';
+  const SAVE_DELAY = 1000;
+  let saveTimeout = null;
+  let hasUnsavedChanges = false;
+
+  // Load existing content
+  const savedContent = localStorage.getItem(STORAGE_KEY);
+  if (savedContent) {
+    try {
+      const data = JSON.parse(savedContent);
+      textarea.value = data.content || '';
+      if (data.timestamp) {
+        const savedTime = new Date(data.timestamp);
+        lastSaved.textContent = `Saved: ${savedTime.toLocaleDateString()} ${savedTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+      }
+    } catch (e) {
+      textarea.value = savedContent;
+    }
+  }
+
+  function updateCharCount() {
+    charCount.textContent = `${textarea.value.length} chars`;
+  }
+
+  function saveContent() {
+    const content = textarea.value;
+    const timestamp = new Date().toISOString();
+    
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ content, timestamp }));
+      const savedTime = new Date(timestamp);
+      lastSaved.textContent = `Saved: ${savedTime.toLocaleDateString()} ${savedTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+      saveStatus.textContent = '✓ Saved';
+      hasUnsavedChanges = false;
+      setTimeout(() => {
+        if (!hasUnsavedChanges) saveStatus.textContent = '';
+      }, 2000);
+    } catch (e) {
+      saveStatus.textContent = '⚠ Save failed';
+      console.error('Failed to save notepad content:', e);
+    }
+  }
+
+  textarea.addEventListener('input', () => {
+    updateCharCount();
+    hasUnsavedChanges = true;
+    saveStatus.textContent = '● Unsaved';
+    if (saveTimeout) clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(saveContent, SAVE_DELAY);
+  });
+
+  textarea.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+      e.preventDefault();
+      if (saveTimeout) clearTimeout(saveTimeout);
+      saveContent();
+    }
+  });
+
+  textarea.addEventListener('blur', () => {
+    if (hasUnsavedChanges) {
+      if (saveTimeout) clearTimeout(saveTimeout);
+      saveContent();
+    }
+  });
+
+  window.addEventListener('beforeunload', () => {
+    if (hasUnsavedChanges) saveContent();
+  });
+
+  updateCharCount();
+}
+
+// ---- Initialization ----
+(function init() {
+  console.log('🚀 Entertainment Console starting...');
+  
+  // Initialize components concurrently
+  Promise.allSettled([
+    loadPodcasts(),
+    loadNews(),
+  ]).then(results => {
+    results.forEach((result, index) => {
+      const component = ['Podcasts', 'News'][index];
+      if (result.status === 'rejected') {
+        console.error(`${component} failed to load:`, result.reason);
+      } else {
+        console.log(`✅ ${component} loaded successfully`);
+      }
+    });
+    console.log('🎵 Entertainment Console ready!');
+  });
+
+  initTerminalNotepad();
+})();
+
+// Make YouTube API callback available globally
+window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
+
+// ---- Performance Monitoring ----
+if (typeof performance !== 'undefined') {
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      const perfData = performance.getEntriesByType('navigation')[0];
+      if (perfData) {
+        console.log(`📊 Page load time: ${Math.round(perfData.loadEventEnd - perfData.fetchStart)}ms`);
+      }
+    }, 100);
+  });
+}
+</script>
+
+</body>
+</html>
